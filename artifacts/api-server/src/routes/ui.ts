@@ -129,6 +129,20 @@ const HTML = `<!DOCTYPE html>
     const log = document.getElementById('log');
     const logBody = document.getElementById('log-body');
 
+    function showResult(cls, icon, text, detail) {
+      logBody.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = cls;
+      p.textContent = icon + ' ' + text;
+      logBody.appendChild(p);
+      if (detail) {
+        const pre = document.createElement('pre');
+        pre.textContent = detail;
+        logBody.appendChild(pre);
+      }
+      log.style.display = 'block';
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       btn.disabled = true;
@@ -145,15 +159,13 @@ const HTML = `<!DOCTYPE html>
           body: JSON.stringify({ to, message }),
         });
         const data = await res.json();
-        log.style.display = 'block';
         if (res.ok) {
-          logBody.innerHTML = '<p class="success">&#10003; Message sent!</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+          showResult('success', '\u2713', 'Message sent!', JSON.stringify(data, null, 2));
         } else {
-          logBody.innerHTML = '<p class="error">&#10005; Error: ' + (data.error || res.statusText) + '</p>';
+          showResult('error', '\u2717', 'Error: ' + (data.error || res.statusText));
         }
       } catch (err) {
-        log.style.display = 'block';
-        logBody.innerHTML = '<p class="error">&#10005; Network error: ' + err.message + '</p>';
+        showResult('error', '\u2717', 'Network error: ' + err.message);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Send Message';

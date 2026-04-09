@@ -21,14 +21,19 @@ router.post("/whatsapp/send", async (req, res): Promise<void> => {
     return;
   }
 
-  const msg = await twilioClient.messages.create({
-    from: FROM_NUMBER,
-    to: toFormatted,
-    body: message,
-  });
+  try {
+    const msg = await twilioClient.messages.create({
+      from: FROM_NUMBER,
+      to: toFormatted,
+      body: message,
+    });
 
-  req.log.info({ sid: msg.sid, to: toFormatted }, "WhatsApp message sent");
-  res.json({ success: true, sid: msg.sid, to: toFormatted });
+    req.log.info({ sid: msg.sid, to: toFormatted }, "WhatsApp message sent");
+    res.json({ success: true, sid: msg.sid, to: toFormatted });
+  } catch (err) {
+    req.log.error({ err, to: toFormatted }, "Failed to send WhatsApp message");
+    res.status(502).json({ error: "Failed to send message via Twilio." });
+  }
 });
 
 export default router;

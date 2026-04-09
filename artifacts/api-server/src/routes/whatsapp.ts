@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import twilio from "twilio";
-import { twilioClient, FROM_NUMBER } from "../lib/twilio";
+import { twilioClient, FROM_NUMBER, validateTwilioSignature } from "../lib/twilio";
 
 const router: IRouter = Router();
 
@@ -8,14 +8,13 @@ router.post("/whatsapp/webhook", async (req, res): Promise<void> => {
   const authToken = process.env["TWILIO_AUTH_TOKEN"];
 
   if (authToken) {
-    const signature = req.headers["x-twilio-signature"] as string | undefined;
+    const signature = (req.headers["x-twilio-signature"] as string) ?? "";
     const protocol = req.headers["x-forwarded-proto"] ?? req.protocol;
     const host = req.headers["host"];
     const url = `${protocol}://${host}${req.originalUrl}`;
 
-    const isValid = twilio.validateRequest(
-      authToken,
-      signature ?? "",
+    const isValid = validateTwilioSignature(
+      signature,
       url,
       req.body as Record<string, string>,
     );

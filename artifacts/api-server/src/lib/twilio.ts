@@ -14,7 +14,11 @@ if (!accountSid || !authToken || !whatsappNumber) {
 export const twilioClient =
   accountSid && authToken ? twilio(accountSid, authToken) : null;
 
-export const FROM_NUMBER = whatsappNumber ?? "";
+export const FROM_NUMBER = whatsappNumber
+  ? whatsappNumber.startsWith("whatsapp:")
+    ? whatsappNumber
+    : `whatsapp:${whatsappNumber}`
+  : "";
 
 export function validateTwilioSignature(
   signature: string,
