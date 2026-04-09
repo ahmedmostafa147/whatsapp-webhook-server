@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type Request, type Response, type IRouter } from "express";
 
 const router: IRouter = Router();
 
@@ -175,7 +175,7 @@ const HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-router.get("/", (_req, res): void => {
+router.get("/", (_req: Request, res: Response): void => {
   res.type("text/html").send(HTML);
 });
 
