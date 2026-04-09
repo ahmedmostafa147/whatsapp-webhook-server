@@ -1,6 +1,6 @@
-import { Router, type Request, type Response, type IRouter } from "express";
+import { Router, type Request, type Response } from "express";
 
-const router: IRouter = Router();
+const router = Router();
 
 const HTML = `<!DOCTYPE html>
 <html lang="en">

@@ -1,8 +1,8 @@
-import { Router, type IRouter } from "express";
+import { Router, type Request, type Response } from "express";
 import twilio from "twilio";
-import { twilioClient, FROM_NUMBER, validateTwilioSignature } from "../lib/twilio";
+import { twilioClient, FROM_NUMBER, validateTwilioSignature } from "../lib/twilio.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.post("/whatsapp/webhook", async (req, res): Promise<void> => {
   const authToken = process.env["TWILIO_AUTH_TOKEN"];

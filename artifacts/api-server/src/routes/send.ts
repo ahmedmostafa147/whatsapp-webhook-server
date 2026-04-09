@@ -1,7 +1,7 @@
-import { Router, type IRouter } from "express";
-import { twilioClient, FROM_NUMBER } from "../lib/twilio";
+import { Router, type Request, type Response } from "express";
+import { twilioClient, FROM_NUMBER } from "../lib/twilio.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.post("/whatsapp/send", async (req, res): Promise<void> => {
   const body = req.body as Record<string, string>;
