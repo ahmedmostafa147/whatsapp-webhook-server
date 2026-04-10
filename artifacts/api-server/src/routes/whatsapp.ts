@@ -1,8 +1,35 @@
 import { Router, type Request, type Response } from "express";
 import twilio from "twilio";
-import { twilioClient, FROM_NUMBER, validateTwilioSignature } from "../lib/twilio.js";
+import {
+  twilioClient,
+  FROM_NUMBER,
+  validateTwilioSignature,
+} from "../lib/twilio.js";
 
 const router = Router();
+
+const RETRY_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+async function sendWithRetry(
+  from: string,
+  to: string,
+  body: string,
+  retries = 1,
+): Promise<void> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await twilioClient!.messages.create({ from, to, body });
+      return;
+    } catch (err: any) {
+      const status = err?.status ?? err?.code;
+      if (attempt < retries && RETRY_STATUS_CODES.has(Number(status))) {
+        await new Promise((r) => setTimeout(r, 1000));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
 
 router.post("/whatsapp/webhook", async (req, res): Promise<void> => {
   const authToken = process.env["TWILIO_AUTH_TOKEN"];
@@ -32,9 +59,10 @@ router.post("/whatsapp/webhook", async (req, res): Promise<void> => {
   const from: string = body["From"] ?? "";
   const messageBody: string = body["Body"] ?? "";
   const messageSid: string = body["MessageSid"] ?? "";
+  const numMedia: number = parseInt(body["NumMedia"] ?? "0", 10);
 
   req.log.info(
-    { from, messageSid, body: messageBody },
+    { from, messageSid, body: messageBody, numMedia },
     "Received WhatsApp message",
   );
 
@@ -42,14 +70,13 @@ router.post("/whatsapp/webhook", async (req, res): Promise<void> => {
 
   if (twilioClient && FROM_NUMBER) {
     try {
-      await twilioClient.messages.create({
-        from: FROM_NUMBER,
-        to: from,
-        body: replyText,
-      });
+      await sendWithRetry(FROM_NUMBER, from, replyText);
       req.log.info({ to: from }, "Reply sent via Twilio");
-    } catch (err) {
-      req.log.error({ err, to: from }, "Failed to send Twilio reply");
+    } catch (err: any) {
+      req.log.error(
+        { err, to: from, twilioCode: err?.code },
+        "Failed to send Twilio reply",
+      );
     }
   } else {
     req.log.warn("Twilio client not initialised — reply not sent");
